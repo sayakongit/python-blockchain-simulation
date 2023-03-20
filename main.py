@@ -1,18 +1,19 @@
 import datetime as dt
 import hashlib
 import json
-# import pymongo
+from file import *
+import pymongo
 
-# client = pymongo.MongoClient("mongodb://localhost:27017/")
-# db = client['college']
-# collection = db['blockTest']
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+db = client['college']
+collection = db['blockTest']
 
 
 class Blockchain:
     def __init__(self) -> None:
         self.chain = list()
         start_block = self.create_block("This is the Genesis block", 1, "0", 1)
-        # collection.insert_one(start_block)
+        collection.insert_one(start_block)
         self.chain.append(start_block)
 
     def mine_block(self, data) -> dict:
@@ -23,7 +24,7 @@ class Blockchain:
         previous_hash = self.hash(previous_block)
         # previous_hash = "Hash value"
         block = self.create_block(data, proof, previous_hash, index)
-        # collection.insert_one(block)
+        collection.insert_one(block)
         self.chain.append(block)
         return block
 
