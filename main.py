@@ -1,7 +1,6 @@
 import datetime as dt
 import hashlib
 import json
-from file import *
 import pymongo
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -12,19 +11,72 @@ collection = db['blockTest']
 class Blockchain:
     def __init__(self) -> None:
         self.chain = list()
-        start_block = self.create_block("This is the Genesis block", 1, "0", 1)
+        self.transactions = list()
+        start_block = self.create_block("This is the Genesis block", 1, "0", 1, 0)
         collection.insert_one(start_block)
         self.chain.append(start_block)
 
-    def mine_block(self, data) -> dict:
+    def mine_block_1(self, data) -> dict:
+        user_id = 1
         previous_block = self.get_previous_block()
         previous_proof = previous_block["proof"]
         index = len(self.chain) + 1
         proof = self.proof_of_work(previous_proof, index, data["id"])
         previous_hash = self.hash(previous_block)
-        # previous_hash = "Hash value"
-        block = self.create_block(data, proof, previous_hash, index)
-        collection.insert_one(block)
+        block = self.create_block(data, proof, previous_hash, index, user_id)
+
+        current_hash = self.hash(block)
+
+        try:
+            with open('user_one.txt', 'r') as file:
+                read_content = file.read()
+                print(read_content)
+                file1 = open("user_one.txt", "a")
+                file1.write(f"{current_hash} - {data['amount']} - {block['timestamp']} \n")
+        except IOError:
+            print('Creating file...')
+            with open('user_one.txt', 'w') as f:
+                f.write(f"{current_hash} - {data['amount']} - {block['timestamp']} \n")
+
+        self.transactions.append(block)
+
+        if len(self.transactions) == 10:
+            collection.insert_many(self.transactions)
+            print('10 transactions updated!')
+            self.transactions.clear()
+
+        self.chain.append(block)
+        return block
+
+    def mine_block_2(self, data) -> dict:
+        user_id = 2
+        previous_block = self.get_previous_block()
+        previous_proof = previous_block["proof"]
+        index = len(self.chain) + 1
+        proof = self.proof_of_work(previous_proof, index, data["id"])
+        previous_hash = self.hash(previous_block)
+        block = self.create_block(data, proof, previous_hash, index, user_id)
+
+        current_hash = self.hash(block)
+
+        try:
+            with open('user_two.txt', 'r') as file:
+                read_content = file.read()
+                print(read_content)
+                file1 = open("user_two.txt", "a")
+                file1.write(f"{current_hash} - {data['amount']} - {block['timestamp']} \n")
+        except IOError:
+            print('Creating file...')
+            with open('user_two.txt', 'w') as f:
+                f.write(f"{current_hash} - {data['amount']} - {block['timestamp']} \n")
+
+        self.transactions.append(block)
+
+        if len(self.transactions) == 10:
+            collection.insert_many(self.transactions)
+            print('10 transactions updated!')
+            self.transactions.clear()
+
         self.chain.append(block)
         return block
 
@@ -62,9 +114,10 @@ class Blockchain:
     def get_previous_block(self) -> dict:
         return self.chain[-1]
 
-    def create_block(self, data: str, proof: int, prev_hash: str, index: int) -> dict:
+    def create_block(self, data: str, proof: int, prev_hash: str, index: int, user: int) -> dict:
         block = {
             "index": index,
+            "user_id": user,
             "timestamp": str(dt.datetime.now()),
             "data": data,
             "proof": proof,
